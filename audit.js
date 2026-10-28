@@ -2,7 +2,9 @@
 // Запуск: передать весь текст файла в use_figma как `code`,
 // подставив в ROOT_ID id из ссылки (node-id=12-34 → '12:34').
 // Корень — экран (FRAME) или секция с флоу (SECTION).
+// @config
 const ROOT_ID = '__NODE_ID__';
+// @end-config
 
 // ===================== НАСТРОЙКИ (правит команда ДС) =====================
 const CFG = {
@@ -26,6 +28,8 @@ const CFG = {
   primary: /^[^\w]*Buttons?\s*\/\s*(Base|Invert)\s*\/\s*Primary/i,
   secondaryLabels: /^(Назад|Вернуться|Отмена|Отменить|Закрыть|Не сейчас|Позже|Пропустить)$/i,
   sheetHeader: /^🍏\s*Bottomsheet Header/i,
+  // Шеврон в конце строки — признак пункта списка (строка из фреймов вместо 🍏 List)
+  chevron: /(right|forward).*(small corner|chevron|arrow)|chevron ?right|arrow ?right/i,
   // «Кладбище компонентов» в Pole Mobile 2.0 (ключи компонентов)
   deprecatedKeys: ['90fdb6a39fe8d98aebc5534c43c4e4b296eab1b7','f3b1ba8496827aa8f0c5ea861b7d79c66ff6c2b1','5b73881c1bf730d42874094acd8f1d3799234fb0','1f85e5a15f8e79fdf99f45e21e1ffa323a45ee66','fb3e6be32ace25d34375b2eb7399c2f3c4dadc6c','479153509f929c69aebf1c161936a7607d1394da','a0cfde1de174d20a51830eb9612497926abfa5a6','4eb2fe78e385aba24ec18088fc4401741491413f','1f59c3dc3f8523eadbca1ffbe07eb52973feceb8','e2f0801cad89c8c75dcb717ff356191465df9b35','dc6286d6d60e0c6abb1a2c5dec74f7401e18f15b','1025eb1ee65b207ed8a6aecf67dee18d90d2f625','2f1739b2bea1d83014b3e9630f45325ac7ae481d','7a571966a1be52e04df003f502f4530b0b00863a','894e1e93c9bae26a3d3bf066e6958a07b956bd37','f6a15f735d1f9d9da6a83f30be3d88ec6b479998','db201258d1d78a5eabf3ba414f4ee3e181aa0228','ea73aaccfa50367b1f3bec777ca47bc48ee5a8c6'],
   // Какие переопределения в инстансе считаем кастомизацией
@@ -419,6 +423,12 @@ function lookalike(n) {
   if (row(n) && n.parent && n.parent.layoutMode === 'VERTICAL' && n.parent.children.filter(row).length >= 2) return ['самодельная строка списка', '🍏 List', 'c:135-44644'];
   return null;
 }
+function chevronRow(n) {
+  if (n.type !== 'FRAME' || n.layoutMode !== 'HORIZONTAL' || n.width < 200) return false;
+  let last = n;
+  while (last && last.type === 'FRAME' && last.layoutMode === 'HORIZONTAL') { const k = last.children.filter(c => c.visible !== false); last = k[k.length - 1]; }
+  return !!last && last.type === 'INSTANCE' && CFG.chevron.test(last.name) && n.findAllWithCriteria({ types: ['TEXT'] }).length > 0;
+}
 const PROD_SKIP = ['off-grid', 'radius-unbound', 'unknown-token', 'hidden-layer', 'multi-primary'];
 async function summarize(got) {
   const by = new Map(); let sev = null;
@@ -490,6 +500,10 @@ async function walk(n, screenW) {
   }
   if (!('children' in n)) return 0;
   const isFrame = t === 'FRAME' || t === 'COMPONENT';
+  if (isFrame && n.id !== SCR && chevronRow(n)) {
+    add(n.id, 'ds-lookalike', 'W', `${CAPTURE ? '' : `«${(firstText(n) || n.name).slice(0, 28)}» — `}строка с текстом и шевроном собрана из фреймов вместо 🍏 List`, 'Замени на пункт 🍏 List с шевроном. Если это заголовок секции со стрелкой — на 🍏 Title', 'c:135-44644');
+    return 0;
+  }
   if (isFrame && CAPTURE && n.id !== SCR) {
     const lk = lookalike(n);
     if (lk) { add(n.id, 'ds-lookalike', 'W', `${lk[0]} вместо ${lk[1]}`, `Замени на ${lk[1]}`, lk[2]); return 0; }

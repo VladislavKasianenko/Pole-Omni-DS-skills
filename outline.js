@@ -1,11 +1,13 @@
 // DS Review · outline.js — ТОЛЬКО ЧТЕНИЕ. Компактная структура экранов для проверки паттернов.
 // Запуск: передать весь текст в use_figma как `code`, подставив ROOT_ID (экран или секция)
 // и OFFSET (с какого экрана начать, если экранов больше LIMIT).
+// @config
 const ROOT_ID = '__NODE_ID__';
 const OFFSET = 0;
 const LIMIT = 8;           // экранов за один вызов
 const MAX_DEPTH = 6;
 const MAX_LINES = 140;     // строк на экран
+// @end-config
 
 const root = await figma.getNodeByIdAsync(ROOT_ID);
 if (!root) return { error: `Узел ${ROOT_ID} не найден` };

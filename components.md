@@ -65,7 +65,7 @@
 | | Прозрачность — часто имитация disabled |
 | | Перепривязка токенов (boundVariables) |
 
-Список правит команда ДС в `scripts/audit.js` → `CFG.badOverride`.
+Список правит команда ДС в `src/audit.js` → `CFG.badOverride` (затем пересборка, см. README).
 
 ### Детач
 

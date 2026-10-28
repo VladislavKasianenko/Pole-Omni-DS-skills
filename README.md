@@ -64,42 +64,59 @@
 | Что поменять | Где |
 |---|---|
 | Порядок ревью, тон, формат сводки | `ds-review/SKILL.md` |
-| Пункты чек-листа, критичность | `ds-review/references/checklist.md` и `CHECK` в `scripts/annotate.js` |
+| Пункты чек-листа, критичность | `ds-review/references/checklist.md` и `CHECK` в `src/annotate.js` |
 | Значения и правила токенов | `ds-review/references/tokens.md` |
-| Эмодзи-маркеры, библиотеки, что считать кастомизацией | `CFG` в `scripts/audit.js` и `references/components.md` |
-| Сколько разных элементов с одной проблемой помечать на экране | `CFG.maxIdsPerGroup` в `scripts/audit.js` |
+| Эмодзи-маркеры, библиотеки, что считать кастомизацией, признак шеврона | `CFG` в `src/audit.js` и `references/components.md` |
+| Сколько разных элементов с одной проблемой помечать на экране | `CFG.maxIdsPerGroup` в `src/audit.js` |
 | Как распознавать самодельные лейблы, кнопки и строки списка внутри компонентов команд | `lookalike()` в `scripts/audit.js` |
-| Текст строки про другие места | `elsewhere()` в `scripts/annotate.js` |
-| Устаревшие компоненты («Кладбище») | `CFG.deprecatedKeys` в `scripts/audit.js` |
+| Текст строки про другие места | `elsewhere()` в `src/annotate.js` |
+| Устаревшие компоненты («Кладбище») | `CFG.deprecatedKeys` в `src/audit.js` |
 | Правила паттернов | `ds-review/references/patterns.md` |
-| Ссылки на гайды в пометках | `LINKS` в `scripts/annotate.js`, страницы компонентов — `COMP_PAGES` в `scripts/audit.js` |
+| Ссылки на гайды в пометках | `LINKS` в `src/annotate.js`, страницы компонентов — `COMP_PAGES` в `src/audit.js` |
 
-Порядок изменений:
-1. Ветка → правка → merge request.
+### Исходники и сборка
+
+Код проверки правят в `src/`: там он читаемый и с комментариями. В навык (`ds-review/scripts/`) идут собранные сжатые версии. Так скрипт короче, и любая модель передаёт его в Figma целиком, а не пишет свой код.
+
+- `src/audit.js` + `src/annotate.js` → `ds-review/scripts/review.js` — проверка и пометки за один вызов;
+- `src/annotate.js` → `ds-review/scripts/annotate.js` — дописать пометки паттернов или убрать пометки;
+- `src/outline.js` → `ds-review/scripts/outline.js`.
+
+После правки `src/` пересобери: `npm install` (один раз), затем `node tools/build.mjs`. Без терминала можно попросить ИИ: «пересобери скрипты DS Review». Не правь `ds-review/scripts/*.js` руками — CI сверяет их с `src/` и упадёт.
+
+Как устроен код — `docs/how-audit-works.md`.
+
+### Порядок изменений
+
+1. Ветка → правка → пересборка → merge request.
 2. Прогони навык на макетах из `tests/examples.md` и сверь с ожидаемыми находками.
-3. Запиши изменения в `CHANGELOG.md` и подними версию.
+3. Запиши изменения в `CHANGELOG.md` и подними версию: номер версии попадает в собранные скрипты и в сводку («Проверено: ds-review X.Y.Z»).
 4. После merge — новый ZIP для тех, кто ставил навык в Claude: Customize → Skills → удалить старый → загрузить новый.
 
-`tools/check.sh` проверяет синтаксис скриптов (`node` ≥ 18), что они укладываются в лимит `use_figma` (50 000 символов), и запускает автотест `tests/mock-audit.mjs`: каждое правило проверяется на заглушке Figma API. Он же запускается в CI. Добавил правило — добавь его случай в автотест.
+`tools/check.sh` проверяет синтаксис, что собранные скрипты совпадают с `src/`, укладываются в лимит `use_figma` (50 000 символов), и запускает автотесты на заглушке Figma API: `tests/mock-audit.mjs` (каждое правило) и `tests/mock-review.mjs` (проверка и пометки одним вызовом). Он же запускается в CI. Добавил правило — добавь его случай в автотест.
 
 ## Структура
 
 ```
 ds-review/            ← сам навык (эту папку устанавливают)
   SKILL.md            ← инструкция для ИИ
-  scripts/
-    audit.js          ← автопроверка (только чтение)
+  scripts/            ← собрано из src/, руками не править
+    review.js         ← проверка и пометки за один вызов
     outline.js        ← структура экранов для проверки паттернов (только чтение)
-    annotate.js       ← ставит и убирает пометки
+    annotate.js       ← дописать пометки паттернов, убрать пометки
   references/
     checklist.md      ← ✅ Checklist DS и правила
     tokens.md         ← токены
     components.md     ← библиотеки, маркеры, кастомизация
     patterns.md       ← паттерны
+src/                  ← исходники скриптов (правит команда ДС)
+  audit.js, annotate.js, outline.js
 tests/examples.md     ← макеты для проверки навыка и эталонное ревью
 tests/mock-audit.mjs  ← автотест правил
-docs/how-audit-works.md ← как устроен audit.js (для тех, кто правит код)
-tools/check.sh        ← проверка синтаксиса
+tests/mock-review.mjs ← автотест собранного review.js
+docs/how-audit-works.md ← как устроен код проверки
+tools/build.mjs       ← сборка src/ → ds-review/scripts/
+tools/check.sh        ← проверки для CI
 CHANGELOG.md
 ```
 

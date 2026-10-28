@@ -1,0 +1,12 @@
+{
+  "name": "ds-review",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node tools/build.mjs",
+    "check": "sh tools/check.sh"
+  },
+  "devDependencies": {
+    "terser": "5.31.0"
+  }
+}
