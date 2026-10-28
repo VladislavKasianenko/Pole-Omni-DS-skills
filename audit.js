@@ -231,6 +231,7 @@ async function checkContainer(n, screenW) {
   const round4 = (x) => 'topLeftRadius' in x ? Math.min(x.topLeftRadius, x.topRightRadius, x.bottomLeftRadius, x.bottomRightRadius) > 0 : maxR(x) > 0;
   if (secs.length < 2 || !(n.itemSpacing > 0 || secs.filter(round4).length >= 2)) return;
   secs.forEach(s => sectionIds.add(s.id));
+  for (const sc of secs) await checkSection(sc, sc === secs[0]);
   kids.filter(c => !sectionIds.has(c.id) && c.width >= n.width * 0.95 && isBox(c)).forEach(b => boxIds.add(b.id));
   if (kids.length > 1 && n.primaryAxisAlignItems !== 'SPACE_BETWEEN') {
     const gn = await boundName(n, 'itemSpacing');
@@ -239,6 +240,20 @@ async function checkContainer(n, screenW) {
   const bad = [];
   for (const k of ['paddingTop', 'paddingBottom']) if (n[k] > 0 && (await boundName(n, k)) !== 'page/padding') bad.push(`${k === 'paddingTop' ? 'сверху' : 'снизу'} ${n[k]}px`);
   if (bad.length) add(n.id, 'container-spacing', 'E', `Отступы контейнера с секциями без токена page/padding: ${bad.join(', ')}`, 'Поставь токен spacing → page/padding (4px)', 'spacing');
+}
+async function checkSection(s, first) {
+  for (const p of (Array.isArray(s.fills) ? s.fills : []).filter(visPaint)) {
+    const b = p.boundVariables && p.boundVariables.color; if (!b) continue;
+    const nm = (await vInfo(b.id)).name;
+    if (/global\/background/.test(nm)) add(s.id, 'section-fill', 'P', `Заливка секции на «${nm}» — это токен фона экрана и подложки заглушек`, 'Секцию заливай 🍏 surface/primary, фон экрана под секциями — 🍏 global/background/secondary', 'p-screens');
+  }
+  const P = [s.paddingTop, s.paddingRight, s.paddingBottom, s.paddingLeft];
+  if (s.layoutMode !== 'VERTICAL' || (!s.paddingLeft && !s.paddingRight)) return; // шапка, баннер во всю ширину
+  const bad = [];
+  ['сверху', 'справа', 'снизу', 'слева'].forEach((w, i) => { if (!(first && i === 0) && P[i] !== 16) bad.push(`${w} ${P[i]}`); });
+  const kids = s.children.filter(c => c.visible !== false);
+  if (kids.length > 1 && /title|header|заголов/i.test(strip(kids[0].name)) && s.itemSpacing !== 12) bad.push(`между заголовком и контентом ${s.itemSpacing}`);
+  if (bad.length) add(s.id, 'section-padding', 'P', `Отступы внутри секции не по паттерну: ${bad.join(', ')}`, 'Внутри секции отступы 16 со всех сторон, между заголовком (🍏 Title) и контентом 12', 'p-section');
 }
 async function checkBox(n) {
   const bad = [];

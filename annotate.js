@@ -36,6 +36,7 @@ const CHECK = {
   'customized': 'Компоненты не закастомлены', 'hidden-layer': 'Компоненты не закастомлены',
   'detached': 'Компоненты не раздетачены', 'manual-bottomsheet': 'Компоненты не раздетачены',
   'off-grid': 'Паттерны: модуль 4px',
+  'section-fill': 'Паттерны: построение экранов', 'section-padding': 'Паттерны: секция и её структура',
   'button-order': 'Паттерны: кнопки', 'secondary-primary': 'Паттерны: кнопки', 'multi-primary': 'Паттерны: кнопки',
   'illustration-meaning': 'Паттерны: подбор иллюстрации', 'pattern': 'Паттерны Magnit app 2.0',
 };

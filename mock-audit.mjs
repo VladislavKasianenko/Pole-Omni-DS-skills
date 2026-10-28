@@ -4,7 +4,7 @@ import fs from 'node:fs';
 const SRC = fs.readFileSync(process.argv[2], 'utf8');
 const run = async (rootId) => { const fn = new (Object.getPrototypeOf(async function () {}).constructor)(SRC.replace("'__NODE_ID__'", `'${rootId}'`)); return fn(); };
 let idc = 100;
-const vars = { v1: { name: '🍏 surface/primary/default', variableCollectionId: 'c1' }, v2: { name: 'corner/28', variableCollectionId: 'c2' }, v3: { name: '🔴 surface/muted/default', variableCollectionId: 'c1' }, v4: { name: 'neutral/gray/800', variableCollectionId: 'c3' } };
+const vars = { v1: { name: '🍏 surface/primary/default', variableCollectionId: 'c1' }, v2: { name: 'corner/28', variableCollectionId: 'c2' }, v3: { name: '🔴 surface/muted/default', variableCollectionId: 'c1' }, v4: { name: 'neutral/gray/800', variableCollectionId: 'c3' }, v5: { name: '🍏 global/background/primary', variableCollectionId: 'c1' } };
 const cols = { c1: { name: 'theme pack 1' }, c2: { name: 'radius' }, c3: { name: 'color' } };
 const styles = { s1: { name: '🍏 Body/Large/Loose' }, s2: { name: '🔴 Body/Large/Accent' } };
 const comps = {};
@@ -35,7 +35,11 @@ const lemon = inst(comp('🍋 Search [ver 1.0]', 'kl'), { width: 360, height: 50
 const web = inst(comp('Type=1', 'kw', true, '🏀 Empty State'), { width: 300, height: 200 }, [inst(comp('S', 'kwb', true, '🏀 Buttons / Base / Primary'), { width: 300, height: 48 }, [txt('Закрыть')])]);
 const btns = node('FRAME', 'buttons', { layoutMode: 'VERTICAL', itemSpacing: 12, paddingTop: 0, paddingBottom: 0, paddingLeft: 0, paddingRight: 0, width: 328 }, [inst(comp('S', 'ks', true, '🍏 Button / Base / Secondary'), { width: 328, height: 48 }, [txt('Понятно')]), inst(comp('S', 'kp2', true, '🍏 Button / Base / Primary'), { width: 328, height: 48 }, [txt('Оформить')])]);
 const inline = inst(comp('S', 'kin', true, '🍏 Inline button / Base / Primary'), { width: 80, height: 28 }, [txt('Изменить')]);
-const container = node('FRAME', 'Group Section', { layoutMode: 'VERTICAL', itemSpacing: 4, paddingTop: 0, paddingBottom: 0, width: 360 }, [sec1, sec2]);
+// Секция промокодов: заливка на токене фона экрана, отступы 12/16 и 8 между заголовком и контентом
+const promoSec = node('FRAME', 'Promo Code Widget', { fills: [solid(0.95, 0.95, 0.95, 'v5')], cornerRadius: 28, layoutMode: 'VERTICAL', itemSpacing: 8, paddingTop: 12, paddingBottom: 12, paddingLeft: 16, paddingRight: 16 }, [inst(comp('S', 'ktitle', true, '🍏 Title'), { width: 328, height: 24 }), txt('Промокоды')]);
+// Шапка во всю ширину: отступ только сверху (под статус-бар) — отступы не проверяем
+const headSec = node('FRAME', 'Head', { fills: [solid(1, 1, 1, 'v1')], layoutMode: 'VERTICAL', itemSpacing: 0, paddingTop: 32, paddingBottom: 0, paddingLeft: 0, paddingRight: 0 }, [txt('Шапка')]);
+const container = node('FRAME', 'Group Section', { layoutMode: 'VERTICAL', itemSpacing: 4, paddingTop: 0, paddingBottom: 0, width: 360 }, [headSec, sec1, sec2, promoSec]);
 const screen = node('FRAME', 'Экран', { id: '1:1', fills: [solid(0.9, 0.9, 0.9, 'v1')], effects: [{ type: 'DROP_SHADOW', visible: true }], effectStyleId: 'sx', height: 800 }, [container, sheet, iconHand, logo, lemon, web, btns, inline]);
 const page = { type: 'PAGE', name: 'Page', children: [screen] }; screen.parent = page;
 const all = {}; const idx = x => { all[x.id] = x; (x.children || []).forEach(idx); }; idx(screen);
@@ -48,7 +52,7 @@ globalThis.figma = {
 };
 const res = await run('1:1');
 const rules = new Set(Object.keys(res.byRule).map(k => k.split(' ')[1]));
-const expected = ['container-spacing', 'container-radius', 'deprecated-token', 'no-text-style', 'hex', 'manual-bottomsheet', 'deprecated-style', 'primitive', 'icon-hex', 'detached', 'web-component', 'secondary-primary', 'button-order', 'multi-primary', 'illustration-meaning'];
+const expected = ['section-fill', 'section-padding', 'container-spacing', 'container-radius', 'deprecated-token', 'no-text-style', 'hex', 'manual-bottomsheet', 'deprecated-style', 'primitive', 'icon-hex', 'detached', 'web-component', 'secondary-primary', 'button-order', 'multi-primary', 'illustration-meaning'];
 const missing = expected.filter(r => !rules.has(r));
 const errors = [];
 if (missing.length) errors.push('Не сработали правила: ' + missing.join(', '));
@@ -121,5 +125,9 @@ if (res2.groups.some(g => g.r === 'multi-primary')) errors.push('Кнопки в
 const fieldG = res2.groups.filter(g => g.ids.some(id => all[id] && all[id].name === 'Input'));
 if (fieldG.length && fieldG.some(g => !(g.more && g.more.length))) errors.push('Поле ввода на двух экранах — одна пометка со ссылкой на второй экран');
 
+if (res.groups.some(g => g.r === 'section-padding' && g.ids.includes(headSec.id))) errors.push('Шапка во всю ширину — отступы не проверяем');
+if (res.groups.some(g => g.r === 'section-padding' && g.ids.includes(sec1.id))) errors.push('Секция с отступами 16 и 12 — по паттерну');
+const pp = res.groups.find(g => g.r === 'section-padding' && g.ids.includes(promoSec.id));
+if (!pp || !/между заголовком и контентом 8/.test(pp.m)) errors.push('Секция промокодов: ждём отступы 12/16 и 8 между заголовком и контентом');
 if (errors.length) { console.error('FAIL\n' + errors.join('\n')); process.exit(1); }
 console.log(`OK  tests/mock-audit.mjs: ${res.totals.groups} групп, правил: ${rules.size}; повторы: «Card» ×6 → 1 пометка; состав компонента команды проверяется`);

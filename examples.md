@@ -88,7 +88,14 @@
 
 ## 6. Эталон без ошибок — «VK — Hard Work», страница «на ревью»
 
-[Страница](https://www.figma.com/design/IiHlUDyMeHI0bM8tq5IYFN/VK-%E2%80%94-Hard-Work?node-id=4331-33075): 5 экранов, собраны почти идеально. Ожидается одна пометка: `outdated-library` на «Promo Code Widget» — скругление на токене `сontainer/section` с кириллицей (файл не принял обновление библиотеки).
+[Страница](https://www.figma.com/design/IiHlUDyMeHI0bM8tq5IYFN/VK-%E2%80%94-Hard-Work?node-id=4331-33075): 5 экранов, собраны почти идеально. Ожидаются три пометки на «Promo Code Widget»:
+- `outdated-library` — скругление на токене `сontainer/section` с кириллицей (файл не принял обновление библиотеки);
+- `section-fill` — заливка `🍏 global/background/primary` вместо `🍏 surface/primary`;
+- `section-padding` — отступы 12 сверху и снизу, 8 между заголовком и контентом.
+
+Та же страница в файле «[2.0] RTE» (`9Zyc3agva164xvkFF4DgwL`, `node-id=23678-132690`) должна давать то же самое. Это проверка, что результат не зависит от модели.
+
+Не должно быть пометок по скриншоту про Clip content у карусели, пустое состояние «Ресторанов нет» и адрес, собранный из фреймов. Таких правил нет в паттернах.
 
 Не должно быть:
 - `deprecated-component` на «🍔 Restaurant Card» и «🖼️ Image_S» внутри «Internal vendor» — это компоненты команды;
